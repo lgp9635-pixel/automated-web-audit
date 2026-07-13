@@ -17,5 +17,5 @@ Dynamic HTML Reporting: Compiles all findings into a clean, easy-to-read, offlin
 (powered by Jinja2).
 🛠️ Installation & Setup
 Clone the repository:
-git clone [https://github.com/lgp9635-pixel/automated-web-auditor.git](https://github.com/lgp9635-pixel/automated-web-auditor.git)
+git clone [https://github.com/lgp9635-pixel/automated-web-audit.git]
 cd automated-web-auditor
