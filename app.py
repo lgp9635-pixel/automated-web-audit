@@ -17,7 +17,7 @@ def reset_app():
     # Delete all the stored widget keys so they revert to empty/unchecked
     for key in list(st.session_state.keys()):
         del st.session_state[key]
-    # Re-initialize the essential switches
+    # Re-initialize the essential custom switches
     st.session_state.reports_ready = False
     st.session_state.domain = ""
 
@@ -78,7 +78,7 @@ st.write("---")
 btn_col1, btn_col2 = st.columns([2, 8])
 
 with btn_col2:
-    # THE FIX: Trigger the callback function when clicked
+    # Trigger the callback function when clicked, completely avoiding the API error
     st.button("🔄 Reset App", on_click=reset_app)
 
 with btn_col1:
