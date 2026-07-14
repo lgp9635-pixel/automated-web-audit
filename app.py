@@ -31,7 +31,6 @@ st.title("🚀 QA Web Verifier Suite")
 st.markdown("Enter a target URL to begin the audit process.")
 
 # --- STEP 1: Discovery ---
-# Added key to connect the text box to session state
 target_url = st.text_input("Target URL (e.g., https://example.com)", key="target_url_input")
 
 if target_url:
@@ -46,7 +45,6 @@ st.subheader("2. Select Audits to Run")
 col1, col2 = st.columns(2)
 
 with col1:
-    # Added keys to all checkboxes and number inputs
     run_crawler = st.checkbox("🗺️ Site Navigation & Link Audit", key="run_crawler_chk")
     
     if run_crawler:
@@ -72,7 +70,14 @@ btn_col1, btn_col2 = st.columns([2, 8])
 
 with btn_col2:
     if st.button("🔄 Reset App"):
-        st.session_state.clear()
+        # THE FIX: Explicitly overwrite the widgets to force the browser to empty them
+        st.session_state["target_url_input"] = ""
+        st.session_state["run_crawler_chk"] = False
+        st.session_state["run_grammar_chk"] = False
+        st.session_state["run_security_chk"] = False
+        st.session_state["run_load_chk"] = False
+        st.session_state["reports_ready"] = False
+        st.session_state["domain"] = ""
         st.rerun()
 
 with btn_col1:
