@@ -3,6 +3,7 @@ import subprocess
 import os
 import urllib.parse
 import sys
+import glob
 from load_tester import run_native_load_test
 from utils import write_load_test_report
 
@@ -24,6 +25,13 @@ def reset_app():
     # Re-initialize the essential switches
     st.session_state["reports_ready"] = False
     st.session_state["domain"] = ""
+
+    # Wipe out old files on reset too!
+    for file in glob.glob("*_audit_report.html"):
+        try:
+            os.remove(file)
+        except Exception:
+            pass
 
 # --- Initialize Session State Memory ---
 if "reports_ready" not in st.session_state:
@@ -88,6 +96,9 @@ with btn_col2:
 with btn_col1:
     run_pressed = st.button("3. Run Selected Audits", type="primary")
 
+# THE FIX: Create an invisible placeholder for the reports BEFORE the slow execution blocks the script
+reports_placeholder = st.empty()
+
 if run_pressed:
     
     if not target_url:
@@ -97,15 +108,12 @@ if run_pressed:
     else:
         domain = urllib.parse.urlparse(target_url).netloc.replace(".", "_")
         
-        # --- THE FIX: Wipe out old reports before starting new ones ---
+        # Instantly blank out the reports box on the screen
+        reports_placeholder.empty()
         st.session_state["reports_ready"] = False
-        old_reports = [
-            f"{domain}_audit_report.html", 
-            "grammar_audit_report.html", 
-            "security_audit_report.html", 
-            "load_audit_report.html"
-        ]
-        for file in old_reports:
+        
+        # Wipe out all old reports globally from the hard drive
+        for file in glob.glob("*_audit_report.html"):
             if os.path.exists(file):
                 try:
                     os.remove(file)
@@ -138,26 +146,28 @@ if run_pressed:
 
 # --- STEP 4: Display Reports ---
 if st.session_state.reports_ready:
-    st.success("🎉 Audits finished! View or download your reports below:")
-    
-    col_a, col_b = st.columns(2)
-    domain = st.session_state.domain
-    
-    with col_a:
-        crawler_file = f"{domain}_audit_report.html"
-        if run_crawler and os.path.exists(crawler_file):
-            with open(crawler_file, "r", encoding="utf-8") as f:
-                st.download_button("📄 Download Navigation Report", f.read(), file_name=crawler_file, mime="text/html")
-                
-        if run_grammar and os.path.exists("grammar_audit_report.html"):
-            with open("grammar_audit_report.html", "r", encoding="utf-8") as f:
-                st.download_button("📄 Download Grammar Report", f.read(), file_name="grammar_audit_report.html", mime="text/html")
-                
-    with col_b:
-        if run_security and os.path.exists("security_audit_report.html"):
-            with open("security_audit_report.html", "r", encoding="utf-8") as f:
-                st.download_button("📄 Download Security Report", f.read(), file_name="security_audit_report.html", mime="text/html")
-                
-        if run_load and os.path.exists("load_audit_report.html"):
-            with open("load_audit_report.html", "r", encoding="utf-8") as f:
-                st.download_button("📄 Download Load Report", f.read(), file_name="load_audit_report.html", mime="text/html")
+    # Draw the reports INSIDE the placeholder we created above
+    with reports_placeholder.container():
+        st.success("🎉 Audits finished! View or download your reports below:")
+        
+        col_a, col_b = st.columns(2)
+        domain = st.session_state.domain
+        
+        with col_a:
+            crawler_file = f"{domain}_audit_report.html"
+            if run_crawler and os.path.exists(crawler_file):
+                with open(crawler_file, "r", encoding="utf-8") as f:
+                    st.download_button("📄 Download Navigation Report", f.read(), file_name=crawler_file, mime="text/html")
+                    
+            if run_grammar and os.path.exists("grammar_audit_report.html"):
+                with open("grammar_audit_report.html", "r", encoding="utf-8") as f:
+                    st.download_button("📄 Download Grammar Report", f.read(), file_name="grammar_audit_report.html", mime="text/html")
+                    
+        with col_b:
+            if run_security and os.path.exists("security_audit_report.html"):
+                with open("security_audit_report.html", "r", encoding="utf-8") as f:
+                    st.download_button("📄 Download Security Report", f.read(), file_name="security_audit_report.html", mime="text/html")
+                    
+            if run_load and os.path.exists("load_audit_report.html"):
+                with open("load_audit_report.html", "r", encoding="utf-8") as f:
+                    st.download_button("📄 Download Load Report", f.read(), file_name="load_audit_report.html", mime="text/html")
