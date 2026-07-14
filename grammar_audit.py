@@ -1,6 +1,7 @@
 import json
 import os
 import language_tool_python
+from bs4 import BeautifulSoup
 from utils import write_grammar_report
 
 def analyze_scraped_content(input_filename="scraped_content.jsonl"):
@@ -23,15 +24,31 @@ def analyze_scraped_content(input_filename="scraped_content.jsonl"):
         for line in f:
             data = json.loads(line)
             url = data.get('url')
-            text = data.get('text')
+            raw_content = data.get('text', '')
             
-            if not text:
+            if not raw_content:
                 continue
                 
-            # Check the text for errors
-            matches = tool.check(text)
+            # --- NEW: BeautifulSoup Filtering Step ---
+            # Parse the content to strip out navigation, headers, footers, and scripts
+            soup = BeautifulSoup(raw_content, "html.parser")
+            
+            # Remove the noisy HTML elements that cause false positives
+            for element in soup(["nav", "header", "footer", "script", "style", "aside", "noscript"]):
+                element.decompose()
+                
+            # Extract only the clean, visible text
+            clean_text = soup.get_text(separator=' ', strip=True)
+            
+            # Check the CLEANED text for errors
+            matches = tool.check(clean_text)
             
             for match in matches:
+                # --- NEW: Ignore specific False Positive rules ---
+                # Silence the rules that trigger on responsive website menus
+                if match.rule_issue_type == 'duplication' or "is duplicated" in match.message:
+                    continue
+                    
                 all_errors.append({
                     'URL': url,
                     'Issue Type': match.rule_issue_type,
