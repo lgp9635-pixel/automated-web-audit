@@ -12,6 +12,12 @@ os.system(f"{sys.executable} -m playwright install chromium")
 # 1. Page config MUST be the first Streamlit command
 st.set_page_config(page_title="QA Web Verifier", layout="wide")
 
+# --- NEW: Initialize Session State Memory ---
+if "reports_ready" not in st.session_state:
+    st.session_state.reports_ready = False
+if "domain" not in st.session_state:
+    st.session_state.domain = ""
+
 # 2. Caching function to prevent repetitive discovery scans
 @st.cache_data
 def run_discovery(url):
