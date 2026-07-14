@@ -17,7 +17,7 @@ def reset_app():
     # Delete all the stored widget keys so they revert to empty/unchecked
     for key in list(st.session_state.keys()):
         del st.session_state[key]
-    # Re-initialize the essential custom switches
+    # Re-initialize the essential switches
     st.session_state.reports_ready = False
     st.session_state.domain = ""
 
