@@ -12,7 +12,16 @@ os.system(f"{sys.executable} -m playwright install chromium")
 # 1. Page config MUST be the first Streamlit command
 st.set_page_config(page_title="QA Web Verifier", layout="wide")
 
-# --- NEW: Initialize Session State Memory ---
+# --- THE FIX: A callback function to wipe the memory before the page reloads ---
+def reset_app():
+    # Delete all the stored widget keys so they revert to empty/unchecked
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+    # Re-initialize the essential switches
+    st.session_state.reports_ready = False
+    st.session_state.domain = ""
+
+# --- Initialize Session State Memory ---
 if "reports_ready" not in st.session_state:
     st.session_state.reports_ready = False
 if "domain" not in st.session_state:
@@ -69,16 +78,8 @@ st.write("---")
 btn_col1, btn_col2 = st.columns([2, 8])
 
 with btn_col2:
-    if st.button("🔄 Reset App"):
-        # THE FIX: Explicitly overwrite the widgets to force the browser to empty them
-        st.session_state["target_url_input"] = ""
-        st.session_state["run_crawler_chk"] = False
-        st.session_state["run_grammar_chk"] = False
-        st.session_state["run_security_chk"] = False
-        st.session_state["run_load_chk"] = False
-        st.session_state["reports_ready"] = False
-        st.session_state["domain"] = ""
-        st.rerun()
+    # THE FIX: Trigger the callback function when clicked
+    st.button("🔄 Reset App", on_click=reset_app)
 
 with btn_col1:
     run_pressed = st.button("3. Run Selected Audits", type="primary")
