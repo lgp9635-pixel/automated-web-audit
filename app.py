@@ -17,7 +17,6 @@ st.set_page_config(page_title="QA Web Verifier", layout="wide")
 def reset_app():
     # Explicitly blank out the text box and uncheck the boxes
     st.session_state["target_url_input"] = ""
-    st.session_state["api_endpoint_input"] = ""
     st.session_state["run_crawler_chk"] = False
     st.session_state["run_grammar_chk"] = False
     st.session_state["run_security_chk"] = False
@@ -76,11 +75,23 @@ with col1:
         
     run_grammar = st.checkbox("📝 Grammar & Spell Check", key="run_grammar_chk")
     
-    # --- NEW: API Checkbox ---
+    # --- UPGRADE: API Checkbox with Presets ---
     run_api = st.checkbox("⚙️ API Endpoint Health Check", key="run_api_chk")
     if run_api:
-        default_api = f"{target_url}/api/health" if target_url else "https://jsonplaceholder.typicode.com/todos/1"
-        api_endpoint = st.text_input("Specific API Endpoint to test:", value=default_api, key="api_endpoint_input")
+        api_presets = {
+            "Custom (Enter URL below)": f"{target_url}/api/health" if target_url else "",
+            "DummyJSON (Complex Payload)": "https://dummyjson.com/products/1",
+            "ReqRes (Mock User Data)": "https://reqres.in/api/users?page=2",
+            "HttpBin (Network Tools)": "https://httpbin.org/get"
+        }
+        
+        selected_preset = st.selectbox("Select an API source:", list(api_presets.keys()), key="api_preset_sel")
+        
+        if selected_preset == "Custom (Enter URL below)":
+            api_endpoint = st.text_input("Specific API Endpoint to test:", value=api_presets["Custom (Enter URL below)"], key="api_endpoint_input")
+        else:
+            api_endpoint = api_presets[selected_preset]
+            st.info(f"Targeting: `{api_endpoint}`")
 
 with col2:
     run_security = st.checkbox("🔒 Security Header Audit", key="run_security_chk")
