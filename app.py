@@ -97,6 +97,21 @@ if run_pressed:
     else:
         domain = urllib.parse.urlparse(target_url).netloc.replace(".", "_")
         
+        # --- THE FIX: Wipe out old reports before starting new ones ---
+        st.session_state["reports_ready"] = False
+        old_reports = [
+            f"{domain}_audit_report.html", 
+            "grammar_audit_report.html", 
+            "security_audit_report.html", 
+            "load_audit_report.html"
+        ]
+        for file in old_reports:
+            if os.path.exists(file):
+                try:
+                    os.remove(file)
+                except Exception:
+                    pass
+        
         with st.status(f"Initiating audits for **{target_url}**...", expanded=True) as status:
             
             if run_crawler:
