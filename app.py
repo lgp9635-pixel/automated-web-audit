@@ -31,9 +31,9 @@ st.title("🚀 QA Web Verifier Suite")
 st.markdown("Enter a target URL to begin the audit process.")
 
 # --- STEP 1: Discovery ---
-target_url = st.text_input("Target URL (e.g., https://example.com)")
+# Added key to connect the text box to session state
+target_url = st.text_input("Target URL (e.g., https://example.com)", key="target_url_input")
 
-# This now runs automatically when you press Enter in the text box
 if target_url:
     with st.spinner(f"Crawling {target_url} for discoverable URLs..."):
         url_count = run_discovery(target_url)
@@ -46,30 +46,28 @@ st.subheader("2. Select Audits to Run")
 col1, col2 = st.columns(2)
 
 with col1:
-    run_crawler = st.checkbox("🗺️ Site Navigation & Link Audit")
+    # Added keys to all checkboxes and number inputs
+    run_crawler = st.checkbox("🗺️ Site Navigation & Link Audit", key="run_crawler_chk")
     
-    # Conditional input: Only shows if the audit is checked
     if run_crawler:
         st.info("How many URLs do you want to scan?")
-        max_pages = st.number_input("Maximum pages to scan", min_value=1, value=10, step=5)
+        max_pages = st.number_input("Maximum pages to scan", min_value=1, value=10, step=5, key="max_pages_num")
         
-    run_grammar = st.checkbox("📝 Grammar & Spell Check")
+    run_grammar = st.checkbox("📝 Grammar & Spell Check", key="run_grammar_chk")
 
 with col2:
-    run_security = st.checkbox("🔒 Security Header Audit")
+    run_security = st.checkbox("🔒 Security Header Audit", key="run_security_chk")
     
-    run_load = st.checkbox("⏱️ Load Testing")
+    run_load = st.checkbox("⏱️ Load Testing", key="run_load_chk")
     
-    # Conditional input: Only shows if Load Testing is checked
     if run_load:
         st.info("Load Test Configuration")
-        total_reqs = st.number_input("Total Requests", min_value=10, value=1000, step=100)
-        concurrency = st.number_input("Concurrent Users", min_value=1, value=10, step=5)
+        total_reqs = st.number_input("Total Requests", min_value=10, value=1000, step=100, key="total_reqs_num")
+        concurrency = st.number_input("Concurrent Users", min_value=1, value=10, step=5, key="concurrency_num")
 
 # --- STEP 3: Execution ---
 st.write("---")
 
-# --- NEW: Place Run and Reset buttons side-by-side ---
 btn_col1, btn_col2 = st.columns([2, 8])
 
 with btn_col2:
@@ -89,7 +87,6 @@ if run_pressed:
     else:
         domain = urllib.parse.urlparse(target_url).netloc.replace(".", "_")
         
-        # Expandable status box for a cleaner UI
         with st.status(f"Initiating audits for **{target_url}**...", expanded=True) as status:
             
             if run_crawler:
@@ -111,16 +108,13 @@ if run_pressed:
             
             status.update(label="✅ All selected audits complete!", state="complete", expanded=False)
             
-        # Save domain and flip the memory switch
         st.session_state.domain = domain
         st.session_state.reports_ready = True
 
-# --- STEP 4: Display Reports (Independent of the Run button) ---
-# NOTE: This block must be completely flush with the left margin!
+# --- STEP 4: Display Reports ---
 if st.session_state.reports_ready:
     st.success("🎉 Audits finished! View or download your reports below:")
     
-    # Create columns to display download buttons side-by-side
     col_a, col_b = st.columns(2)
     domain = st.session_state.domain
     
