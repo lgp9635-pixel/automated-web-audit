@@ -2,6 +2,7 @@ import streamlit as st
 import subprocess
 import os
 import urllib.parse
+import sys
 from load_tester import run_native_load_test
 from utils import write_load_test_report
 
@@ -72,15 +73,15 @@ if st.button("3. Run Selected Audits", type="primary"):
             
             if run_crawler:
                 st.write(f"🗺️ Running Site Navigation & Link Audit (Scanning up to {max_pages} pages)...")
-                subprocess.run(["python3", "audit.py", target_url, str(max_pages)])
+                subprocess.run([sys.executable, "audit.py", target_url, str(max_pages)])
                 
             if run_grammar:
                 st.write("📝 Running Grammar Check...")
-                subprocess.run(["python3", "grammar_audit.py"])
+                subprocess.run([sys.executable, "grammar_audit.py"])
                 
             if run_security:
                 st.write("🔒 Running Security Audit...")
-                subprocess.run(["python3", "security_audit.py", target_url])
+                subprocess.run([sys.executable, "security_audit.py", target_url])
                 
             if run_load:
                 st.write(f"⏱️ Running Load Test ({total_reqs} requests)...")
