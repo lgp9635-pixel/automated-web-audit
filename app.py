@@ -17,10 +17,12 @@ st.set_page_config(page_title="QA Web Verifier", layout="wide")
 def reset_app():
     # Explicitly blank out the text box and uncheck the boxes
     st.session_state["target_url_input"] = ""
+    st.session_state["api_endpoint_input"] = ""
     st.session_state["run_crawler_chk"] = False
     st.session_state["run_grammar_chk"] = False
     st.session_state["run_security_chk"] = False
     st.session_state["run_load_chk"] = False
+    st.session_state["run_api_chk"] = False
     
     # Re-initialize the essential switches
     st.session_state["reports_ready"] = False
@@ -73,6 +75,12 @@ with col1:
         max_pages = st.number_input("Maximum pages to scan", min_value=1, value=10, step=5, key="max_pages_num")
         
     run_grammar = st.checkbox("📝 Grammar & Spell Check", key="run_grammar_chk")
+    
+    # --- NEW: API Checkbox ---
+    run_api = st.checkbox("⚙️ API Endpoint Health Check", key="run_api_chk")
+    if run_api:
+        default_api = f"{target_url}/api/health" if target_url else "https://jsonplaceholder.typicode.com/todos/1"
+        api_endpoint = st.text_input("Specific API Endpoint to test:", value=default_api, key="api_endpoint_input")
 
 with col2:
     run_security = st.checkbox("🔒 Security Header Audit", key="run_security_chk")
@@ -103,7 +111,7 @@ if run_pressed:
     
     if not target_url:
         st.error("🚨 Please enter a Target URL at the top of the page before running audits.")
-    elif not any([run_crawler, run_grammar, run_security, run_load]):
+    elif not any([run_crawler, run_grammar, run_security, run_load, run_api]):
         st.warning("Please select at least one audit to run.")
     else:
         domain = urllib.parse.urlparse(target_url).netloc.replace(".", "_")
@@ -134,6 +142,11 @@ if run_pressed:
                 st.write("🔒 Running Security Audit...")
                 subprocess.run([sys.executable, "security_audit.py", target_url])
                 
+            # --- NEW: API Execution ---
+            if run_api:
+                st.write(f"⚙️ Running API Health Check on {api_endpoint}...")
+                subprocess.run([sys.executable, "api_audit.py", api_endpoint])
+                
             if run_load:
                 st.write(f"⏱️ Running Load Test ({total_reqs} requests)...")
                 load_metrics = run_native_load_test(target_url, total_requests=total_reqs, concurrent_users=concurrency)
@@ -162,6 +175,11 @@ if st.session_state.reports_ready:
             if run_grammar and os.path.exists("grammar_audit_report.html"):
                 with open("grammar_audit_report.html", "r", encoding="utf-8") as f:
                     st.download_button("📄 Download Grammar Report", f.read(), file_name="grammar_audit_report.html", mime="text/html")
+                    
+            # --- NEW: API Download Button ---
+            if run_api and os.path.exists("api_audit_report.html"):
+                with open("api_audit_report.html", "r", encoding="utf-8") as f:
+                    st.download_button("📄 Download API Report", f.read(), file_name="api_audit_report.html", mime="text/html")
                     
         with col_b:
             if run_security and os.path.exists("security_audit_report.html"):
