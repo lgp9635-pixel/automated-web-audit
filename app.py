@@ -68,7 +68,19 @@ with col2:
 
 # --- STEP 3: Execution ---
 st.write("---")
-if st.button("3. Run Selected Audits", type="primary"):
+
+# --- NEW: Place Run and Reset buttons side-by-side ---
+btn_col1, btn_col2 = st.columns([2, 8])
+
+with btn_col2:
+    if st.button("🔄 Reset App"):
+        st.session_state.clear()
+        st.rerun()
+
+with btn_col1:
+    run_pressed = st.button("3. Run Selected Audits", type="primary")
+
+if run_pressed:
     
     if not target_url:
         st.error("🚨 Please enter a Target URL at the top of the page before running audits.")
@@ -99,7 +111,7 @@ if st.button("3. Run Selected Audits", type="primary"):
             
             status.update(label="✅ All selected audits complete!", state="complete", expanded=False)
             
-        # --- NEW: Save domain and flip the memory switch ---
+        # Save domain and flip the memory switch
         st.session_state.domain = domain
         st.session_state.reports_ready = True
 
