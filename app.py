@@ -98,27 +98,35 @@ if st.button("3. Run Selected Audits", type="primary"):
                 write_load_test_report(load_metrics)
             
             status.update(label="✅ All selected audits complete!", state="complete", expanded=False)
+            
+        # --- NEW: Save domain and flip the memory switch ---
+        st.session_state.domain = domain
+        st.session_state.reports_ready = True
 
-        st.success("🎉 Audits finished! View or download your reports below:")
-        
-        # Create columns to display download buttons side-by-side
-        col_a, col_b = st.columns(2)
-        
-        with col_a:
-            crawler_file = f"{domain}_audit_report.html"
-            if run_crawler and os.path.exists(crawler_file):
-                with open(crawler_file, "r", encoding="utf-8") as f:
-                    st.download_button("📄 Download Navigation Report", f.read(), file_name=crawler_file, mime="text/html")
-                    
-            if run_grammar and os.path.exists("grammar_audit_report.html"):
-                with open("grammar_audit_report.html", "r", encoding="utf-8") as f:
-                    st.download_button("📄 Download Grammar Report", f.read(), file_name="grammar_audit_report.html", mime="text/html")
-                    
-        with col_b:
-            if run_security and os.path.exists("security_audit_report.html"):
-                with open("security_audit_report.html", "r", encoding="utf-8") as f:
-                    st.download_button("📄 Download Security Report", f.read(), file_name="security_audit_report.html", mime="text/html")
-                    
-            if run_load and os.path.exists("load_audit_report.html"):
-                with open("load_audit_report.html", "r", encoding="utf-8") as f:
-                    st.download_button("📄 Download Load Report", f.read(), file_name="load_audit_report.html", mime="text/html")
+# --- STEP 4: Display Reports (Independent of the Run button) ---
+# NOTE: This block must be completely flush with the left margin!
+if st.session_state.reports_ready:
+    st.success("🎉 Audits finished! View or download your reports below:")
+    
+    # Create columns to display download buttons side-by-side
+    col_a, col_b = st.columns(2)
+    domain = st.session_state.domain
+    
+    with col_a:
+        crawler_file = f"{domain}_audit_report.html"
+        if run_crawler and os.path.exists(crawler_file):
+            with open(crawler_file, "r", encoding="utf-8") as f:
+                st.download_button("📄 Download Navigation Report", f.read(), file_name=crawler_file, mime="text/html")
+                
+        if run_grammar and os.path.exists("grammar_audit_report.html"):
+            with open("grammar_audit_report.html", "r", encoding="utf-8") as f:
+                st.download_button("📄 Download Grammar Report", f.read(), file_name="grammar_audit_report.html", mime="text/html")
+                
+    with col_b:
+        if run_security and os.path.exists("security_audit_report.html"):
+            with open("security_audit_report.html", "r", encoding="utf-8") as f:
+                st.download_button("📄 Download Security Report", f.read(), file_name="security_audit_report.html", mime="text/html")
+                
+        if run_load and os.path.exists("load_audit_report.html"):
+            with open("load_audit_report.html", "r", encoding="utf-8") as f:
+                st.download_button("📄 Download Load Report", f.read(), file_name="load_audit_report.html", mime="text/html")
