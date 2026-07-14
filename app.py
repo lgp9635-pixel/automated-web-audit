@@ -6,6 +6,9 @@ import sys
 from load_tester import run_native_load_test
 from utils import write_load_test_report
 
+# --- NEW: Force install Playwright browsers on the cloud ---
+os.system(f"{sys.executable} -m playwright install chromium")
+
 # 1. Page config MUST be the first Streamlit command
 st.set_page_config(page_title="QA Web Verifier", layout="wide")
 
