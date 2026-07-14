@@ -17,6 +17,7 @@ st.set_page_config(page_title="QA Web Verifier", layout="wide")
 def reset_app():
     # Explicitly blank out the text box and uncheck the boxes
     st.session_state["target_url_input"] = ""
+    st.session_state["api_endpoint_input"] = ""
     st.session_state["run_crawler_chk"] = False
     st.session_state["run_grammar_chk"] = False
     st.session_state["run_security_chk"] = False
@@ -50,6 +51,14 @@ def run_discovery(url):
     return 42 
 
 st.title("🚀 QA Web Verifier Suite")
+
+# --- NEW: Honest Disclaimer ---
+st.info(
+    "👋 **Welcome!** This live demo is hosted on a lightweight, free-tier server. "
+    "Because the backend Playwright browsers require heavy memory, if the app throws an 'Out of Memory' error or hangs, "
+    "another user might be running a heavy audit right now. Feel free to [clone the repo](https://github.com/lgp9635-pixel/automated-web-audit) to run it locally!"
+)
+
 st.markdown("Enter a target URL to begin the audit process.")
 
 # --- STEP 1: Discovery ---
@@ -75,7 +84,7 @@ with col1:
         
     run_grammar = st.checkbox("📝 Grammar & Spell Check", key="run_grammar_chk")
     
-    # --- UPGRADE: API Checkbox with Presets ---
+    # --- API Checkbox with Presets ---
     run_api = st.checkbox("⚙️ API Endpoint Health Check", key="run_api_chk")
     if run_api:
         api_presets = {
@@ -115,7 +124,7 @@ with btn_col2:
 with btn_col1:
     run_pressed = st.button("3. Run Selected Audits", type="primary")
 
-# THE FIX: Create an invisible placeholder for the reports BEFORE the slow execution blocks the script
+# Create an invisible placeholder for the reports BEFORE the slow execution blocks the script
 reports_placeholder = st.empty()
 
 if run_pressed:
@@ -153,7 +162,6 @@ if run_pressed:
                 st.write("🔒 Running Security Audit...")
                 subprocess.run([sys.executable, "security_audit.py", target_url])
                 
-            # --- NEW: API Execution ---
             if run_api:
                 st.write(f"⚙️ Running API Health Check on {api_endpoint}...")
                 subprocess.run([sys.executable, "api_audit.py", api_endpoint])
@@ -187,7 +195,6 @@ if st.session_state.reports_ready:
                 with open("grammar_audit_report.html", "r", encoding="utf-8") as f:
                     st.download_button("📄 Download Grammar Report", f.read(), file_name="grammar_audit_report.html", mime="text/html")
                     
-            # --- NEW: API Download Button ---
             if run_api and os.path.exists("api_audit_report.html"):
                 with open("api_audit_report.html", "r", encoding="utf-8") as f:
                     st.download_button("📄 Download API Report", f.read(), file_name="api_audit_report.html", mime="text/html")
