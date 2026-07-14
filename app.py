@@ -158,6 +158,4 @@ if st.session_state.reports_ready:
             with open("security_audit_report.html", "r", encoding="utf-8") as f:
                 st.download_button("📄 Download Security Report", f.read(), file_name="security_audit_report.html", mime="text/html")
                 
-        if run_load and os.path.exists("load_audit_report.html"):
-            with open("load_audit_report.html", "r", encoding="utf-8") as f:
-                st.download_button("📄 Download Load Report", f.read(), file_name="load_audit_report.html", mime="text/html")
+        if run_load and os.
