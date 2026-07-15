@@ -122,7 +122,16 @@ def run_discovery(url):
 with st.sidebar:
     st.header("⚙️ Audit Configuration")
     
-    target_url = st.text_input("Target URL (e.g., https://example.com)", key="target_url_input")
+    # Capture the raw input from the user
+    raw_url_input = st.text_input("Target URL (e.g., https://example.com)", key="target_url_input")
+    
+    # URL Sanitizer: Automatically inject https:// if the user forgets it
+    if raw_url_input:
+        target_url = raw_url_input.strip()
+        if not target_url.startswith(("http://", "https://")):
+            target_url = "https://" + target_url
+    else:
+        target_url = ""
     
     st.markdown("---")
     st.subheader("Select Modules")
@@ -308,8 +317,6 @@ if st.session_state.reports_ready:
                 .header-box {{ background-color: #546E7A; color: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }}
                 .stats-row {{ display: flex; justify-content: center; gap: 20px; margin-top: 20px; font-size: 15px; color: #E9ECEF; }}
                 .stats-row span {{ background: rgba(255,255,255,0.1); padding: 8px 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); }}
-                
-                /* Updated to accommodate the new clarifying sub-text */
                 .verdict-banner {{ background-color: #5B8A72; color: white; padding: 15px; border-radius: 5px; text-align: center; margin-bottom: 30px; }}
                 .verdict-main {{ font-size: 24px; font-weight: bold; margin-bottom: 5px; }}
                 .verdict-sub {{ font-size: 15px; font-weight: normal; opacity: 0.9; }}
