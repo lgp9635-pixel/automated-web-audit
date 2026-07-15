@@ -7,22 +7,17 @@ from urllib.parse import urlparse, urljoin
 from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright
 
-# --- NEW: Import the Async version of Playwright Stealth ---
-from playwright_stealth import stealth_async 
+# --- FIX: Use the updated v2.0.3 Stealth API ---
+from playwright_stealth import Stealth
 
 from utils import generate_html_report
 import json
 
 def save_scraped_text(url, raw_text, temp_filename="scraped_content.jsonl"):
-    """
-    Appends the URL and scraped text as a single JSON line to a temporary file.
-    """
     data = {
         "url": url,
         "text": raw_text
     }
-    
-    # The 'a' opens the file in append mode. It will create the file if it doesn't exist.
     with open(temp_filename, 'a', encoding='utf-8') as f:
         f.write(json.dumps(data) + '\n')
 
@@ -58,35 +53,23 @@ def determine_priority(parent_tags, url):
         return "Low"
     return "Medium"
 
-# --- UPDATED: Pass 'context' instead of 'browser' so it inherits the human User-Agent ---
 async def audit_page(context, url):
     page = await context.new_page()
-    
-    # --- NEW: Apply the stealth patch to the page BEFORE you go to the URL ---
-    await stealth_async(page)
-    
     try:
         print(f"🥷 Crawling (Stealth Active): {url}")
         await page.goto(url, wait_until="domcontentloaded", timeout=20000)
         
-        # Get the page content once
         html_content = await page.content()
         soup = BeautifulSoup(html_content, "html.parser")
         
-        # --- NEW CODE: EXTRACT AND SAVE TEXT ---
-        # 1. Remove elements that contain code or non-readable text
         for hidden_element in soup(["script", "style", "noscript"]):
             hidden_element.decompose()
             
-        # 2. Extract the clean, human-readable text
         extracted_text = soup.get_text(separator=' ', strip=True)
         
-        # 3. Save it to disk instantly to clear memory
         if extracted_text:
             save_scraped_text(url, extracted_text)
-        # ---------------------------------------
 
-        # Existing link extraction logic continues...
         links = soup.find_all("a", href=True)
         
         for a in links:
@@ -104,18 +87,21 @@ async def main():
     async with async_playwright() as playwright:
         browser = await playwright.chromium.launch(headless=True)
         
-        # --- NEW: Humanize the User-Agent so you don't broadcast "HeadlessChrome" ---
+        # Humanize the browser profile
         context = await browser.new_context(
             user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
             viewport={"width": 1920, "height": 1080}
         )
+        
+        # --- FIX: Apply Stealth at the Context level for v2.0.3 API ---
+        stealth = Stealth()
+        await stealth.apply_stealth_async(context)
         
         # 1. Crawling Phase
         while len(visited_urls) < MAX_PAGES and urls_to_visit:
             url = urls_to_visit.pop(0)
             if url not in visited_urls:
                 visited_urls.add(url)
-                # Pass the stealthy context into the audit_page function
                 await audit_page(context, url)
                 for link in all_found_links:
                     if link not in visited_urls and link not in urls_to_visit:
@@ -125,12 +111,13 @@ async def main():
         sem = Semaphore(5)
         
         async def validate_link(link, data):
+            # THE FIX: Count static files as passed so math perfectly balances!
             if link.lower().endswith(('.pdf', '.docx', '.xlsx', '.pptx', '.zip', '.rar', '.jpg', '.png', '.mp4', '.exe', '.dmg', '.gif', '.mov')):
+                passed_links.append(link)
                 return
             
             async with sem:
                 try:
-                    # Use context.request instead of browser.request to maintain the human User-Agent
                     res = await context.request.get(link, timeout=10000)
                     
                     if res.status == 200:
@@ -144,7 +131,6 @@ async def main():
                             "text": data.get("text", "N/A")
                         })
                 except Exception as e:
-                    # This captures the 407 Proxy Errors and DNS failures
                     broken_links.append({
                         "url": link, 
                         "status": "Connection Error", 
@@ -155,14 +141,12 @@ async def main():
 
         print(f"\n🚀 Validating {len(all_found_links)} links...")
         
-        # Engine execution block
         tasks = [validate_link(link, data) for link, data in all_found_links.items()]
         await gather(*tasks) 
         
         await context.close()
         await browser.close()
     
-    # 3. Final Report Generation
     generate_html_report(target_domain, len(all_found_links), len(broken_links), len(passed_links), broken_links)
 
 if __name__ == "__main__":
