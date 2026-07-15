@@ -295,6 +295,7 @@ if st.session_state.reports_ready:
         <!DOCTYPE html>
         <html>
         <head>
+            <meta charset="UTF-8">
             <title>QA Master Report - {domain}</title>
             <style>
                 body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #F8F9FA; color: #212529; padding: 40px; }}
