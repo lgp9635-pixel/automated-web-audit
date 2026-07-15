@@ -315,7 +315,7 @@ if st.session_state.reports_ready:
                     <p style="margin-top: 0; color: #adb5bd;">Target: {target_url} | Scan Date: {timestamp}</p>
                     <div class="stats-row">
                         <span>🔍 Initial Links Found: <strong>{final_url_count}</strong></span>
-                        <span>📄 Audit Depth: <strong>{final_max_pages}</strong></span>
+                        <span>📄 Audit Page Depth: <strong>{final_max_pages}</strong></span>
                     </div>
                 </div>
                 <div class="verdict-banner">
