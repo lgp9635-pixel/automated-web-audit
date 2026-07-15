@@ -139,6 +139,11 @@ else:
     if run_pressed:
         if not any([run_crawler, run_grammar, run_security, run_load, run_api]):
             st.warning("⚠️ Please select at least one audit module from the sidebar.")
+            
+        # --- THE FIX: Grammar Dependency Safety Catch ---
+        elif run_grammar and not run_crawler:
+            st.error("🚨 Dependency Error: The Grammar Audit requires the Site Navigation Crawler to gather the text first. Please check the 'Site Navigation & Link Audit' box as well.")
+            
         else:
             domain = urllib.parse.urlparse(target_url).netloc.replace(".", "_")
             
@@ -182,9 +187,6 @@ else:
             st.session_state.domain = domain
             st.session_state.reports_ready = True
 
-# ==========================================
-# 5. DISPLAY REPORTS
-# ==========================================
 # ==========================================
 # 5. COMPILE AND DISPLAY MASTER REPORT
 # ==========================================
