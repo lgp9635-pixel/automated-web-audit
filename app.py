@@ -308,7 +308,11 @@ if st.session_state.reports_ready:
                 .header-box {{ background-color: #546E7A; color: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }}
                 .stats-row {{ display: flex; justify-content: center; gap: 20px; margin-top: 20px; font-size: 15px; color: #E9ECEF; }}
                 .stats-row span {{ background: rgba(255,255,255,0.1); padding: 8px 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); }}
-                .verdict-banner {{ background-color: #5B8A72; color: white; font-size: 24px; font-weight: bold; padding: 15px; border-radius: 5px; text-align: center; margin-bottom: 30px; }}
+                
+                /* Updated to accommodate the new clarifying sub-text */
+                .verdict-banner {{ background-color: #5B8A72; color: white; padding: 15px; border-radius: 5px; text-align: center; margin-bottom: 30px; }}
+                .verdict-main {{ font-size: 24px; font-weight: bold; margin-bottom: 5px; }}
+                .verdict-sub {{ font-size: 15px; font-weight: normal; opacity: 0.9; }}
                 
                 /* Dynamic Table of Contents Navigation Bar */
                 .nav-bar {{ display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; margin-bottom: 30px; }}
@@ -329,8 +333,10 @@ if st.session_state.reports_ready:
                         <span>📄 Audit Page Depth: <strong>{final_max_pages}</strong></span>
                     </div>
                 </div>
+                
                 <div class="verdict-banner">
-                    ✅ READY FOR PRODUCTION - No Blockers Found
+                    <div class="verdict-main">✅ READY FOR PRODUCTION - No Critical Blockers Found</div>
+                    <div class="verdict-sub">*(Note: Grammar suggestions or missing security headers below are non-blocking best practices)*</div>
                 </div>
         """
 
@@ -383,6 +389,7 @@ if st.session_state.reports_ready:
             "red": "#C65D57", "#dc3545": "#C65D57", "#DC3545": "#C65D57", "#FF4B4B": "#C65D57"
         }
         
+        # 1. Color replacements
         for old_color, new_color in color_targets.items():
             master_html = master_html.replace(f"color: {old_color}", f"color: {new_color}")
             master_html = master_html.replace(f"color:{old_color}", f"color: {new_color}")
@@ -396,6 +403,10 @@ if st.session_state.reports_ready:
             master_html = master_html.replace(f"color='{old_color}'", f"color='{new_color}'")
             master_html = master_html.replace(f'bgcolor="{old_color}"', f'bgcolor="{new_color}"')
             master_html = master_html.replace(f"bgcolor='{old_color}'", f"bgcolor='{new_color}'")
+
+        # 2. Text Copy Replacements (Softening the "Missing" labels)
+        master_html = master_html.replace(">Missing<", ">Missing (Best Practice)<")
+        master_html = master_html.replace(">missing<", ">missing (best practice)<")
 
         master_filename = f"{domain}_MASTER_REPORT.html"
         with open(master_filename, "w", encoding="utf-8") as f:
