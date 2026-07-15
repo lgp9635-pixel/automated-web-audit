@@ -40,9 +40,7 @@ hide_streamlit_style = """
                 font-family: 'Goudy Old Style', Garamond, 'Times New Roman', serif !important;
             }
             
-            /* ==========================================
-               THE FIX: Protect Streamlit's Icon Fonts 
-               ========================================== */
+            /* Protect Streamlit's Icon Fonts so arrows don't turn into words */
             .material-symbols-rounded, .stIcon, [data-testid="stIconMaterial"] {
                 font-family: 'Material Symbols Rounded' !important;
             }
@@ -192,28 +190,20 @@ with st.sidebar:
     # ==========================================
     # MISSING TARGET URL UI LOGIC
     # ==========================================
-    # If any module is selected BUT the Target URL box is empty, alert the user!
     if not target_url and any([run_crawler, run_grammar, run_api, run_security, run_load]):
-        
-        # 1. Native Streamlit Alert in the sidebar
         st.error("🚨 Please enter a Target URL at the top to proceed.")
-        
-        # 2. Ultra-aggressive CSS to make the input box glow red
         st.markdown(
             """
             <style>
-            /* 1. Target the literal typing area to force the background color */
             [data-testid="stSidebar"] [data-testid="stTextInput"] input {
-                background-color: rgba(255, 75, 75, 0.15) !important;
-                border: 2px solid #FF4B4B !important;
+                background-color: rgba(198, 93, 87, 0.15) !important; /* Muted red background */
+                border: 2px solid #C65D57 !important; /* Muted red border */
                 border-radius: 6px !important;
             }
-            
-            /* 2. Target ALL possible Streamlit outer wrapping boxes to force the glowing outline */
             [data-testid="stSidebar"] [data-testid="stTextInput"] > div[data-baseweb="input"],
             [data-testid="stSidebar"] [data-testid="stTextInput"] > div > div {
-                border: 2px solid #FF4B4B !important;
-                box-shadow: 0 0 10px rgba(255, 75, 75, 0.6) !important;
+                border: 2px solid #C65D57 !important;
+                box-shadow: 0 0 10px rgba(198, 93, 87, 0.6) !important;
                 border-radius: 8px !important;
             }
             </style>
@@ -313,14 +303,29 @@ if st.session_state.reports_ready:
             <meta charset="UTF-8">
             <title>QA Master Report - {domain}</title>
             <style>
-                body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #F8F9FA; color: #212529; padding: 40px; }}
+                body {{ font-family: 'Goudy Old Style', Garamond, 'Times New Roman', serif; background-color: #F8F9FA; color: #212529; padding: 40px; }}
                 .container {{ max-width: 1200px; margin: auto; }}
-                .header-box {{ background-color: #2C3E50; color: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }}
+                .header-box {{ background-color: #546E7A; color: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }}
                 .stats-row {{ display: flex; justify-content: center; gap: 20px; margin-top: 20px; font-size: 15px; color: #E9ECEF; }}
                 .stats-row span {{ background: rgba(255,255,255,0.1); padding: 8px 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); }}
-                .verdict-banner {{ background-color: #28A745; color: white; font-size: 24px; font-weight: bold; padding: 15px; border-radius: 5px; text-align: center; margin-bottom: 30px; }}
-                .module-card {{ background: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-left: 5px solid #2C3E50; overflow-x: auto; }}
-                .module-title {{ color: #2C3E50; border-bottom: 2px solid #E9ECEF; padding-bottom: 10px; margin-top: 0; }}
+                
+                /* Updated: Muted Sage Green for the Ready Banner */
+                .verdict-banner {{ background-color: #5B8A72; color: white; font-size: 24px; font-weight: bold; padding: 15px; border-radius: 5px; text-align: center; margin-bottom: 30px; }}
+                
+                .module-card {{ background: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-left: 5px solid #546E7A; overflow-x: auto; }}
+                .module-title {{ color: #546E7A; border-bottom: 2px solid #E9ECEF; padding-bottom: 10px; margin-top: 0; }}
+                
+                /* ==========================================
+                   THE FIX: Force Sub-Modules to use Muted Colors
+                   ========================================== */
+                /* Automatically hunt down harsh greens and swap them to Muted Sage */
+                .module-card [style*="color: green"], .module-card [style*="color: #28a745"], .module-card [style*="color: #28A745"], .module-card [style*="color:green"] {{
+                    color: #5B8A72 !important;
+                }}
+                /* Automatically hunt down harsh reds and swap them to Dusty Brick Red */
+                .module-card [style*="color: red"], .module-card [style*="color: #dc3545"], .module-card [style*="color: #DC3545"], .module-card [style*="color: #FF4B4B"], .module-card [style*="color:red"] {{
+                    color: #C65D57 !important;
+                }}
             </style>
         </head>
         <body>
@@ -401,10 +406,10 @@ if st.session_state.reports_ready:
                 const blob = new Blob([decodedHtml], {{ type: 'text/html' }});
                 const url = URL.createObjectURL(blob);
                 
-                // Inject the button with the true Blob URL attached BEFORE the user clicks
+                // Inject the button with the true Blob URL attached BEFORE the user clicks. Included font update to match.
                 const container = document.getElementById('btn-container');
                 container.innerHTML = `
-                    <a id="open-report-btn" href="${{url}}" target="_blank" style="background-color: #546E7A; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer; transition: background-color 0.3s; display: inline-block;">
+                    <a id="open-report-btn" href="${{url}}" target="_blank" style="background-color: #546E7A; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-family: 'Goudy Old Style', Garamond, 'Times New Roman', serif; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer; transition: background-color 0.3s; display: inline-block;">
                         📘 Open Master Report in New Tab
                     </a>
                 `;
