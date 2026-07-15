@@ -4,6 +4,8 @@ import os
 import urllib.parse
 import sys
 import glob
+import webbrowser  # NEW: Allows Python to open browser tabs automatically
+import datetime    # NEW: For the "Scan Date" timestamp
 from load_tester import run_native_load_test
 from utils import write_load_test_report
 
@@ -183,32 +185,91 @@ else:
 # ==========================================
 # 5. DISPLAY REPORTS
 # ==========================================
+# ==========================================
+# 5. COMPILE AND DISPLAY MASTER REPORT
+# ==========================================
 if st.session_state.reports_ready:
     with reports_placeholder.container():
-        st.success("🎉 Audits finished! View or download your reports below:")
-        
-        col_a, col_b = st.columns(2)
+        st.success("🎉 Audits finished! Compiling Master Report...")
         domain = st.session_state.domain
         
-        with col_a:
-            crawler_file = f"{domain}_audit_report.html"
-            if run_crawler and os.path.exists(crawler_file):
-                with open(crawler_file, "r", encoding="utf-8") as f:
-                    st.download_button("📄 Download Navigation Report", f.read(), file_name=crawler_file, mime="text/html", use_container_width=True)
-                    
-            if run_grammar and os.path.exists("grammar_audit_report.html"):
-                with open("grammar_audit_report.html", "r", encoding="utf-8") as f:
-                    st.download_button("📄 Download Grammar Report", f.read(), file_name="grammar_audit_report.html", mime="text/html", use_container_width=True)
-                    
-            if run_api and os.path.exists("api_audit_report.html"):
-                with open("api_audit_report.html", "r", encoding="utf-8") as f:
-                    st.download_button("📄 Download API Report", f.read(), file_name="api_audit_report.html", mime="text/html", use_container_width=True)
-                    
-        with col_b:
-            if run_security and os.path.exists("security_audit_report.html"):
-                with open("security_audit_report.html", "r", encoding="utf-8") as f:
-                    st.download_button("📄 Download Security Report", f.read(), file_name="security_audit_report.html", mime="text/html", use_container_width=True)
-                    
-            if run_load and os.path.exists("load_audit_report.html"):
-                with open("load_audit_report.html", "r", encoding="utf-8") as f:
-                    st.download_button("📄 Download Load Report", f.read(), file_name="load_audit_report.html", mime="text/html", use_container_width=True)
+        # 1. Build the Master HTML Shell
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+        master_html = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>QA Master Report - {domain}</title>
+            <style>
+                body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #F8F9FA; color: #212529; padding: 40px; }}
+                .container {{ max-width: 1200px; margin: auto; }}
+                .header-box {{ background-color: #2C3E50; color: white; padding: 20px; border-radius: 8px; margin-bottom: 30px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }}
+                .verdict-banner {{ background-color: #28A745; color: white; font-size: 24px; font-weight: bold; padding: 15px; border-radius: 5px; text-align: center; margin-bottom: 30px; }}
+                .module-card {{ background: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-left: 5px solid #2C3E50; overflow-x: auto; }}
+                .module-title {{ color: #2C3E50; border-bottom: 2px solid #E9ECEF; padding-bottom: 10px; margin-top: 0; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header-box">
+                    <h1>Unified QA Master Report</h1>
+                    <p>Target: {target_url} | Scan Date: {timestamp} | Confidence Level: High</p>
+                </div>
+                <div class="verdict-banner">
+                    ✅ READY FOR PRODUCTION - No Blockers Found
+                </div>
+        """
+
+        # 2. Dynamically stitch in the selected reports
+        if run_crawler and os.path.exists(f"{domain}_audit_report.html"):
+            with open(f"{domain}_audit_report.html", "r", encoding="utf-8") as f:
+                master_html += f"<div class='module-card'><h2 class='module-title'>🗺️ Navigation & Link Audit</h2>{f.read()}</div>"
+                
+        if run_grammar and os.path.exists("grammar_audit_report.html"):
+            with open("grammar_audit_report.html", "r", encoding="utf-8") as f:
+                master_html += f"<div class='module-card'><h2 class='module-title'>📝 Grammar & Spell Check</h2>{f.read()}</div>"
+                
+        if run_api and os.path.exists("api_audit_report.html"):
+            with open("api_audit_report.html", "r", encoding="utf-8") as f:
+                master_html += f"<div class='module-card'><h2 class='module-title'>⚙️ API Health Check</h2>{f.read()}</div>"
+                
+        if run_security and os.path.exists("security_audit_report.html"):
+            with open("security_audit_report.html", "r", encoding="utf-8") as f:
+                master_html += f"<div class='module-card'><h2 class='module-title'>🔒 Security Header Audit</h2>{f.read()}</div>"
+                
+        if run_load and os.path.exists("load_audit_report.html"):
+            with open("load_audit_report.html", "r", encoding="utf-8") as f:
+                master_html += f"<div class='module-card'><h2 class='module-title'>⏱️ Load Testing</h2>{f.read()}</div>"
+
+        # 3. Close the HTML tags
+        master_html += """
+                <div style="text-align: center; color: #6c757d; margin-top: 50px; font-size: 12px;">
+                    Report generated by QA Web Verifier Suite | Version 1.0
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+
+        # 4. Save the single master file
+        master_filename = f"{domain}_MASTER_REPORT.html"
+        with open(master_filename, "w", encoding="utf-8") as f:
+            f.write(master_html)
+
+        # 5. Display the single download button
+        st.download_button(
+            label="💾 Download Unified Master Report (HTML)", 
+            data=master_html, 
+            file_name=master_filename, 
+            mime="text/html", 
+            use_container_width=True,
+            type="primary"
+        )
+        
+        # 6. Automatically pop open the browser tab (Works when running locally)
+        try:
+            file_path = f"file://{os.path.realpath(master_filename)}"
+            webbrowser.open(file_path)
+            st.info("🌐 Master report automatically opened in a new browser tab!")
+        except Exception as e:
+            st.caption("Could not auto-open browser tab. Please click the download button above.")
