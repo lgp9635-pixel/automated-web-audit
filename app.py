@@ -89,8 +89,12 @@ with st.sidebar:
             with st.spinner("🔍 Analyzing domain size..."):
                 url_count = run_discovery(target_url)
                 
-            st.success(f"✅ Found **{url_count}** discoverable URLs.")
-            st.caption("💡 *Adjust the slider to limit the audit scope for a faster test.*")
+            # Extract the clean domain name (e.g., turns "https://familyfirstas.com/" into "familyfirstas.com")
+            clean_domain = urllib.parse.urlparse(target_url).netloc
+            
+            # Update the UI to be highly specific
+            st.success(f"✅ Found **{url_count}** internal URLs belonging to **{clean_domain}**.")
+            st.caption(f"💡 *The crawler is strictly locked to this domain. Adjust the slider to limit the audit scope for a faster test.*")
             
             max_pages = st.slider(
                 "Pages to scan:",
