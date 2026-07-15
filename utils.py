@@ -230,4 +230,14 @@ def write_load_test_report(metrics, output_filename="load_audit_report.html"):
         
         with open(output_filename, "w", encoding="utf-8") as f:
             f.write(template.render(
-                metrics
+                metrics=metrics,
+                success_color=success_color
+            ))
+            
+        print(f"⏱️ Load test HTML report successfully generated: {output_filename}")
+        
+        # Automatically pop it open in the browser
+        webbrowser.open(f"file://{os.path.abspath(output_filename)}")
+        
+    except Exception as e:
+        print(f"⚠️ An error occurred while writing the load test report: {e}")
