@@ -174,6 +174,29 @@ with st.sidebar:
         total_reqs = st.number_input("Total Requests", min_value=10, value=1000, step=100, key="total_reqs_num")
         concurrency = st.number_input("Concurrent Users", min_value=1, value=10, step=5, key="concurrency_num")
 
+    # ==========================================
+    # MISSING TARGET URL UI LOGIC
+    # ==========================================
+    # If any module is selected BUT the Target URL box is empty, paint the outline red.
+    if not target_url and any([run_crawler, run_grammar, run_api, run_security, run_load]):
+        st.markdown(
+            """
+            <style>
+            /* Target the specific input wrapper by its aria-label using modern :has() selector */
+            div[data-baseweb="input"]:has(input[aria-label="Target URL (e.g., https://example.com)"]) {
+                border-color: #FF4B4B !important;
+                box-shadow: 0 0 0 1px #FF4B4B !important;
+            }
+            /* Fallback for older browsers (targets the first text input in the sidebar) */
+            section[data-testid="stSidebar"] div[data-testid="stTextInput"]:first-of-type div[data-baseweb="input"] {
+                border-color: #FF4B4B !important;
+                box-shadow: 0 0 0 1px #FF4B4B !important;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
+
     st.markdown("---")
     run_pressed = st.button("Run Verification Suite", type="primary", use_container_width=True)
     st.button("🔄 Reset App", on_click=reset_app, use_container_width=True)
