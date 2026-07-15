@@ -6,6 +6,10 @@ import webbrowser
 from urllib.parse import urlparse, urljoin
 from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright
+
+# --- NEW: Import the Async version of Playwright Stealth ---
+from playwright_stealth import stealth_async 
+
 from utils import generate_html_report
 import json
 
@@ -54,10 +58,15 @@ def determine_priority(parent_tags, url):
         return "Low"
     return "Medium"
 
-async def audit_page(browser, url):
-    page = await browser.new_page()
+# --- UPDATED: Pass 'context' instead of 'browser' so it inherits the human User-Agent ---
+async def audit_page(context, url):
+    page = await context.new_page()
+    
+    # --- NEW: Apply the stealth patch to the page BEFORE you go to the URL ---
+    await stealth_async(page)
+    
     try:
-        print(f"🔍 Crawling: {url}")
+        print(f"🥷 Crawling (Stealth Active): {url}")
         await page.goto(url, wait_until="domcontentloaded", timeout=20000)
         
         # Get the page content once
@@ -95,15 +104,19 @@ async def main():
     async with async_playwright() as playwright:
         browser = await playwright.chromium.launch(headless=True)
         
-        # Create a specific context for making API requests
-        context = await browser.new_context()
+        # --- NEW: Humanize the User-Agent so you don't broadcast "HeadlessChrome" ---
+        context = await browser.new_context(
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            viewport={"width": 1920, "height": 1080}
+        )
         
         # 1. Crawling Phase
         while len(visited_urls) < MAX_PAGES and urls_to_visit:
             url = urls_to_visit.pop(0)
             if url not in visited_urls:
                 visited_urls.add(url)
-                await audit_page(browser, url)
+                # Pass the stealthy context into the audit_page function
+                await audit_page(context, url)
                 for link in all_found_links:
                     if link not in visited_urls and link not in urls_to_visit:
                         urls_to_visit.append(link)
@@ -117,7 +130,7 @@ async def main():
             
             async with sem:
                 try:
-                    # Use context.request instead of browser.request
+                    # Use context.request instead of browser.request to maintain the human User-Agent
                     res = await context.request.get(link, timeout=10000)
                     
                     if res.status == 200:
