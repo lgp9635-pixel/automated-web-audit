@@ -47,6 +47,8 @@ def reset_app():
     st.session_state["run_api_chk"] = False
     st.session_state["reports_ready"] = False
     st.session_state["domain"] = ""
+    st.session_state["url_count"] = 0
+    st.session_state["max_pages"] = ""
 
     for file in glob.glob("*_audit_report.html"):
         try:
@@ -64,6 +66,10 @@ if "reports_ready" not in st.session_state:
     st.session_state.reports_ready = False
 if "domain" not in st.session_state:
     st.session_state.domain = ""
+if "url_count" not in st.session_state:
+    st.session_state.url_count = 0
+if "max_pages" not in st.session_state:
+    st.session_state.max_pages = ""
 
 @st.cache_data
 def run_discovery(url):
@@ -82,10 +88,8 @@ def run_discovery(url):
             if href.startswith('/') or domain in href:
                 internal_links.add(href)
                 
-        # Return the actual number of links found
         return max(len(internal_links), 10)
     except Exception:
-        # Failsafe fallback
         return 50 
 
 # ==========================================
@@ -101,26 +105,36 @@ with st.sidebar:
     
     run_crawler = st.checkbox("🗺️ Site Navigation & Link Audit", key="run_crawler_chk")
     
-    # NEW UX: Dynamic Discovery Slider
     if run_crawler:
         if target_url:
             with st.spinner("🔍 Analyzing domain size..."):
                 url_count = run_discovery(target_url)
                 
+            st.session_state.url_count = url_count
             clean_domain = urllib.parse.urlparse(target_url).netloc
             
-            st.success(f"✅ Found **{url_count}** internal URLs belonging to **{clean_domain}**.")
-            st.caption(f"💡 *The crawler is strictly locked to this domain. Adjust the slider to limit the audit scope for a faster test.*")
+            st.success(f"✅ Initial scan found **{url_count}** discoverable links on the homepage.")
             
-            max_pages = st.slider(
-                "Pages to scan:",
-                min_value=1,
-                max_value=url_count if url_count > 0 else 10,
-                value=min(10, url_count)
-            )
+            # THE FIX: The Exhaustive Crawl Override
+            exhaustive_crawl = st.checkbox("🔥 Run Exhaustive Full-Site Crawl", help="Ignores all limits and crawls every internal page it can find until the entire site is mapped.")
+            
+            if exhaustive_crawl:
+                st.info(f"⚠️ **Exhaustive Mode Active:** The bot will not stop until every single internal page on `{clean_domain}` has been found and validated. This may take a few minutes on large sites.")
+                max_pages = 999999  # Massive integer to ensure the loop runs until the URL queue is completely empty
+                st.session_state.max_pages = "Unlimited (Full Domain)"
+            else:
+                st.caption("💡 *Or use the slider to run a faster, limited sample scan.*")
+                max_pages = st.slider(
+                    "Maximum Pages to Crawl (Audit Depth):",
+                    min_value=1,
+                    max_value=max(500, url_count * 3), # Give the slider a much higher ceiling just in case
+                    value=min(10, url_count)
+                )
+                st.session_state.max_pages = str(max_pages)
         else:
             st.info("👈 Enter a Target URL above to configure the crawler.")
             max_pages = 10
+            st.session_state.max_pages = str(max_pages)
         
     run_grammar = st.checkbox("📝 Grammar & Spell Check", key="run_grammar_chk")
     
@@ -189,7 +203,11 @@ else:
             with st.status(f"Executing selected audits for **{target_url}**...", expanded=True) as status:
                 
                 if run_crawler:
-                    st.write(f"🗺️ Running Site Navigation & Link Audit (Scanning up to {max_pages} pages)...")
+                    if exhaustive_crawl:
+                        st.write("🗺️ Running Exhaustive Full-Site Navigation & Link Audit...")
+                    else:
+                        st.write(f"🗺️ Running Site Navigation & Link Audit (Scanning up to {max_pages} pages)...")
+                        
                     subprocess.run([sys.executable, "audit.py", target_url, str(max_pages)])
                     
                 if run_grammar:
@@ -222,7 +240,11 @@ if st.session_state.reports_ready:
         st.success("🎉 Audits finished! Compiling Master Report...")
         domain = st.session_state.domain
         
+        final_url_count = st.session_state.get("url_count", "N/A")
+        final_max_pages = st.session_state.get("max_pages", "N/A")
+        
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+        
         master_html = f"""
         <!DOCTYPE html>
         <html>
@@ -231,7 +253,9 @@ if st.session_state.reports_ready:
             <style>
                 body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #F8F9FA; color: #212529; padding: 40px; }}
                 .container {{ max-width: 1200px; margin: auto; }}
-                .header-box {{ background-color: #2C3E50; color: white; padding: 20px; border-radius: 8px; margin-bottom: 30px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }}
+                .header-box {{ background-color: #2C3E50; color: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }}
+                .stats-row {{ display: flex; justify-content: center; gap: 20px; margin-top: 20px; font-size: 15px; color: #E9ECEF; }}
+                .stats-row span {{ background: rgba(255,255,255,0.1); padding: 8px 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); }}
                 .verdict-banner {{ background-color: #28A745; color: white; font-size: 24px; font-weight: bold; padding: 15px; border-radius: 5px; text-align: center; margin-bottom: 30px; }}
                 .module-card {{ background: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-left: 5px solid #2C3E50; overflow-x: auto; }}
                 .module-title {{ color: #2C3E50; border-bottom: 2px solid #E9ECEF; padding-bottom: 10px; margin-top: 0; }}
@@ -240,8 +264,12 @@ if st.session_state.reports_ready:
         <body>
             <div class="container">
                 <div class="header-box">
-                    <h1>Unified QA Master Report</h1>
-                    <p>Target: {target_url} | Scan Date: {timestamp} | Confidence Level: High</p>
+                    <h1 style="margin-bottom: 10px; margin-top: 0;">Unified QA Master Report</h1>
+                    <p style="margin-top: 0; color: #adb5bd;">Target: {target_url} | Scan Date: {timestamp}</p>
+                    <div class="stats-row">
+                        <span>🔍 Initial Links Found: <strong>{final_url_count}</strong></span>
+                        <span>📄 Audit Depth: <strong>{final_max_pages}</strong></span>
+                    </div>
                 </div>
                 <div class="verdict-banner">
                     ✅ READY FOR PRODUCTION - No Blockers Found
@@ -281,7 +309,11 @@ if st.session_state.reports_ready:
         with open(master_filename, "w", encoding="utf-8") as f:
             f.write(master_html)
 
-        # Display the primary download button
+        # The Clean UI Update: Instruction text and a massive button, no ugly iframes.
+        st.markdown("---")
+        st.subheader("📄 Master Report Ready")
+        st.info("💡 **Click the download button below, then open the downloaded file in your browser to view the full report in a pristine, full-screen tab.**")
+        
         st.download_button(
             label="💾 Download Unified Master Report (HTML)", 
             data=master_html, 
@@ -290,13 +322,3 @@ if st.session_state.reports_ready:
             use_container_width=True,
             type="primary"
         )
-        
-        # Render the HTML report directly inside the Streamlit dashboard
-        st.markdown("---")
-        st.subheader("📄 Master Report Preview")
-        
-        # FIX for Streamlit Deprecation Warning
-        try:
-            st.html(master_html)
-        except AttributeError:
-            components.html(master_html, height=800, scrolling=True)
