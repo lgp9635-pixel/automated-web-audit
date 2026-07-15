@@ -86,6 +86,12 @@ def reset_app():
         except Exception:
             pass
 
+def sanitize_url():
+    """Callback to instantly update the text box if the user forgets https://"""
+    val = st.session_state.target_url_input.strip()
+    if val and not val.startswith(("http://", "https://")):
+        st.session_state.target_url_input = "https://" + val
+
 if "reports_ready" not in st.session_state:
     st.session_state.reports_ready = False
 if "domain" not in st.session_state:
@@ -122,16 +128,8 @@ def run_discovery(url):
 with st.sidebar:
     st.header("⚙️ Audit Configuration")
     
-    # Capture the raw input from the user
-    raw_url_input = st.text_input("Target URL (e.g., https://example.com)", key="target_url_input")
-    
-    # URL Sanitizer: Automatically inject https:// if the user forgets it
-    if raw_url_input:
-        target_url = raw_url_input.strip()
-        if not target_url.startswith(("http://", "https://")):
-            target_url = "https://" + target_url
-    else:
-        target_url = ""
+    # We attach the 'on_change' callback directly to the input box!
+    target_url = st.text_input("Target URL (e.g., https://example.com)", key="target_url_input", on_change=sanitize_url)
     
     st.markdown("---")
     st.subheader("Select Modules")
