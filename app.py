@@ -115,8 +115,11 @@ with st.sidebar:
             
             st.success(f"✅ Initial scan found **{url_count}** discoverable links on the homepage.")
             
-            # THE FIX: The Exhaustive Crawl Override
-            exhaustive_crawl = st.checkbox("🔥 Run Exhaustive Full-Site Crawl", help="Ignores all limits and crawls every internal page it can find until the entire site is mapped.")
+            # THE FIX: Updated the "help" tooltip to include the Production Warning
+            exhaustive_crawl = st.checkbox(
+                "🔥 Run Exhaustive Full-Site Crawl", 
+                help="Ignores all limits and crawls every internal page. 🛑 BEST PRACTICE: Only run this against a Development/Integration environment to avoid straining Production servers."
+            )
             
             if exhaustive_crawl:
                 st.warning(f"⚠️ **Exhaustive Mode Active:** The bot will not stop until every single internal page on `{clean_domain}` has been found and validated.\n\n**🛑 Best Practice:** *It is highly recommended to only run this against a Development or Integration environment. Running an exhaustive crawl against a Production environment can place significant strain on live servers.*")
@@ -309,7 +312,7 @@ if st.session_state.reports_ready:
         with open(master_filename, "w", encoding="utf-8") as f:
             f.write(master_html)
 
-       # ==========================================
+        # ==========================================
         # THE NEW TAB FIX: JavaScript Blob rendering (V2)
         # ==========================================
         st.markdown("---")
@@ -357,5 +360,5 @@ if st.session_state.reports_ready:
         </script>
         """
         
-        # Render the custom button in Streamlit
-        components.html(open_tab_js, height=100)
+        # Render the custom button safely using st.html() to clear the deprecation warning
+        st.html(open_tab_js)
