@@ -25,19 +25,26 @@ st.set_page_config(
 # Force install Playwright browsers on the cloud
 os.system(f"{sys.executable} -m playwright install chromium")
 
-# Hide Streamlit Branding, Fix Button Colors, and Apply Goudy Old Style
+# Hide Streamlit Branding, Fix Button Colors, Apply Goudy Old Style & Protect Icons
 hide_streamlit_style = """
             <style>
-            /* Hide the main menu and footer, but KEEP the header so the sidebar toggle arrow is visible */
+            /* Hide the main menu and footer, but KEEP the header */
             #MainMenu {visibility: hidden;}
             footer {visibility: hidden;}
             
-            /* Hide the 'Deploy' button specifically, instead of the whole header */
+            /* Hide the 'Deploy' button specifically */
             .stDeployButton {display: none;}
             
             /* Apply Goudy Old Style globally to the Streamlit App */
             html, body, [class*="st-"], .stApp, p, span, h1, h2, h3, h4, h5, h6, label, div, button, input {
                 font-family: 'Goudy Old Style', Garamond, 'Times New Roman', serif !important;
+            }
+            
+            /* ==========================================
+               THE FIX: Protect Streamlit's Icon Fonts 
+               ========================================== */
+            .material-symbols-rounded, .stIcon, [data-testid="stIconMaterial"] {
+                font-family: 'Material Symbols Rounded' !important;
             }
             
             /* Override Streamlit's default red "Primary" button to a professional Blue-Gray */
