@@ -366,36 +366,43 @@ if st.session_state.reports_ready:
         # Encode the HTML to safely pass it to JavaScript
         b64_html = base64.b64encode(master_html.encode('utf-8')).decode('utf-8')
         
-        # We now use a true <a> anchor tag connected to a Blob URL, styling it to a professional Blue-Gray.
+        # We MUST use components.html here so the browser actually runs the JavaScript
         open_tab_js = f"""
-        <div style="display: flex; justify-content: center; margin-top: 20px;">
-            <a id="open-report-btn" href="#" target="_blank" style="background-color: #546E7A; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer; transition: background-color 0.3s;">
-                📘 Open Master Report in New Tab
-            </a>
-        </div>
+        <div id="btn-container" style="display: flex; justify-content: center; margin-top: 20px;">
+            </div>
         <script>
-            // Safely decode Base64 into a UTF-8 string
-            const b64Data = "{b64_html}";
-            const binaryStr = window.atob(b64Data);
-            const bytes = new Uint8Array(binaryStr.length);
-            for (let i = 0; i < binaryStr.length; i++) {{
-                bytes[i] = binaryStr.charCodeAt(i);
-            }}
-            const decodedHtml = new TextDecoder('utf-8').decode(bytes);
+            try {{
+                // Safely decode Base64 into a UTF-8 string
+                const b64Data = "{b64_html}";
+                const binaryStr = window.atob(b64Data);
+                const bytes = new Uint8Array(binaryStr.length);
+                for (let i = 0; i < binaryStr.length; i++) {{
+                    bytes[i] = binaryStr.charCodeAt(i);
+                }}
+                const decodedHtml = new TextDecoder('utf-8').decode(bytes);
 
-            // Create a file-like Blob in the browser's memory
-            const blob = new Blob([decodedHtml], {{ type: 'text/html' }});
-            
-            // Attach the Blob directly to the link's URL BEFORE the user clicks it.
-            // This guarantees the browser treats it as a 100% safe, user-initiated click.
-            const url = URL.createObjectURL(blob);
-            const btn = document.getElementById('open-report-btn');
-            btn.href = url;
-            
-            // Add a subtle hover effect (darkens to Slate)
-            btn.addEventListener('mouseover', function() {{ this.style.backgroundColor = '#37474F'; }});
-            btn.addEventListener('mouseout', function() {{ this.style.backgroundColor = '#546E7A'; }});
+                // Create a file-like Blob in the browser's memory
+                const blob = new Blob([decodedHtml], {{ type: 'text/html' }});
+                const url = URL.createObjectURL(blob);
+                
+                // Inject the button with the true Blob URL attached BEFORE the user clicks
+                const container = document.getElementById('btn-container');
+                container.innerHTML = `
+                    <a id="open-report-btn" href="${{url}}" target="_blank" style="background-color: #546E7A; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer; transition: background-color 0.3s; display: inline-block;">
+                        📘 Open Master Report in New Tab
+                    </a>
+                `;
+                
+                // Add a subtle hover effect (darkens to Slate)
+                const btn = document.getElementById('open-report-btn');
+                btn.addEventListener('mouseover', function() {{ this.style.backgroundColor = '#37474F'; }});
+                btn.addEventListener('mouseout', function() {{ this.style.backgroundColor = '#546E7A'; }});
+            }} catch (e) {{
+                // Fallback in case of error
+                console.error(e);
+            }}
         </script>
         """
         
-        st.html(open_tab_js)
+        # Render the custom button securely using components.html!
+        components.html(open_tab_js, height=100)
