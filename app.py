@@ -119,7 +119,7 @@ with st.sidebar:
             exhaustive_crawl = st.checkbox("🔥 Run Exhaustive Full-Site Crawl", help="Ignores all limits and crawls every internal page it can find until the entire site is mapped.")
             
             if exhaustive_crawl:
-                st.info(f"⚠️ **Exhaustive Mode Active:** The bot will not stop until every single internal page on `{clean_domain}` has been found and validated. This may take a few minutes on large sites.")
+                st.warning(f"⚠️ **Exhaustive Mode Active:** The bot will not stop until every single internal page on `{clean_domain}` has been found and validated.\n\n**🛑 Best Practice:** *It is highly recommended to only run this against a Development or Integration environment. Running an exhaustive crawl against a Production environment can place significant strain on live servers.*")
                 max_pages = 999999  # Massive integer to ensure the loop runs until the URL queue is completely empty
                 st.session_state.max_pages = "Unlimited (Full Domain)"
             else:
