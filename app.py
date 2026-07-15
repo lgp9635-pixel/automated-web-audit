@@ -183,15 +183,23 @@ with st.sidebar:
         # 1. Native Streamlit Alert in the sidebar
         st.error("🚨 Please enter a Target URL at the top to proceed.")
         
-        # 2. Brute-force CSS to make the input box glow red
+        # 2. Ultra-aggressive CSS to make the input box glow red
         st.markdown(
             """
             <style>
-            /* Target the sidebar text input directly, bypassing modern selectors */
-            [data-testid="stSidebar"] [data-testid="stTextInput"] div[data-baseweb="input"] {
+            /* 1. Target the literal typing area to force the background color */
+            [data-testid="stSidebar"] [data-testid="stTextInput"] input {
+                background-color: rgba(255, 75, 75, 0.15) !important;
                 border: 2px solid #FF4B4B !important;
-                box-shadow: 0 0 8px rgba(255, 75, 75, 0.6) !important;
-                background-color: rgba(255, 75, 75, 0.1) !important;
+                border-radius: 6px !important;
+            }
+            
+            /* 2. Target ALL possible Streamlit outer wrapping boxes to force the glowing outline */
+            [data-testid="stSidebar"] [data-testid="stTextInput"] > div[data-baseweb="input"],
+            [data-testid="stSidebar"] [data-testid="stTextInput"] > div > div {
+                border: 2px solid #FF4B4B !important;
+                box-shadow: 0 0 10px rgba(255, 75, 75, 0.6) !important;
+                border-radius: 8px !important;
             }
             </style>
             """,
