@@ -303,13 +303,19 @@ if st.session_state.reports_ready:
             <meta charset="UTF-8">
             <title>QA Master Report - {domain}</title>
             <style>
-                body {{ font-family: 'Goudy Old Style', Garamond, 'Times New Roman', serif; background-color: #F8F9FA; color: #212529; padding: 40px; }}
+                body {{ font-family: 'Goudy Old Style', Garamond, 'Times New Roman', serif; background-color: #F8F9FA; color: #212529; padding: 40px; scroll-behavior: smooth; }}
                 .container {{ max-width: 1200px; margin: auto; }}
                 .header-box {{ background-color: #546E7A; color: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }}
                 .stats-row {{ display: flex; justify-content: center; gap: 20px; margin-top: 20px; font-size: 15px; color: #E9ECEF; }}
                 .stats-row span {{ background: rgba(255,255,255,0.1); padding: 8px 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); }}
                 .verdict-banner {{ background-color: #5B8A72; color: white; font-size: 24px; font-weight: bold; padding: 15px; border-radius: 5px; text-align: center; margin-bottom: 30px; }}
-                .module-card {{ background: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-left: 5px solid #546E7A; overflow-x: auto; }}
+                
+                /* Dynamic Table of Contents Navigation Bar */
+                .nav-bar {{ display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; margin-bottom: 30px; }}
+                .nav-bar a {{ background-color: white; color: #546E7A; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: bold; border: 1px solid #546E7A; transition: background-color 0.3s, color 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }}
+                .nav-bar a:hover {{ background-color: #546E7A; color: white; }}
+                
+                .module-card {{ background: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-left: 5px solid #546E7A; overflow-x: auto; scroll-margin-top: 20px; }}
                 .module-title {{ color: #546E7A; border-bottom: 2px solid #E9ECEF; padding-bottom: 10px; margin-top: 0; }}
             </style>
         </head>
@@ -328,27 +334,39 @@ if st.session_state.reports_ready:
                 </div>
         """
 
+        # Dynamically build the Navigation Bar and Content sections based on what was run
+        nav_links_html = "<div class='nav-bar'>"
+        report_content_html = ""
+
         if run_crawler and os.path.exists(f"{domain}_audit_report.html"):
+            nav_links_html += "<a href='#nav-crawler'>🗺️ Navigation & Links</a>"
             with open(f"{domain}_audit_report.html", "r", encoding="utf-8") as f:
-                master_html += f"<div class='module-card'><h2 class='module-title'>🗺️ Navigation & Link Audit</h2>{f.read()}</div>"
+                report_content_html += f"<div id='nav-crawler' class='module-card'><h2 class='module-title'>🗺️ Navigation & Link Audit</h2>{f.read()}</div>"
                 
         if run_grammar and os.path.exists("grammar_audit_report.html"):
+            nav_links_html += "<a href='#nav-grammar'>📝 Grammar & Spelling</a>"
             with open("grammar_audit_report.html", "r", encoding="utf-8") as f:
-                master_html += f"<div class='module-card'><h2 class='module-title'>📝 Grammar & Spell Check</h2>{f.read()}</div>"
+                report_content_html += f"<div id='nav-grammar' class='module-card'><h2 class='module-title'>📝 Grammar & Spell Check</h2>{f.read()}</div>"
                 
         if run_api and os.path.exists("api_audit_report.html"):
+            nav_links_html += "<a href='#nav-api'>⚙️ API Health Check</a>"
             with open("api_audit_report.html", "r", encoding="utf-8") as f:
-                master_html += f"<div class='module-card'><h2 class='module-title'>⚙️ API Health Check</h2>{f.read()}</div>"
+                report_content_html += f"<div id='nav-api' class='module-card'><h2 class='module-title'>⚙️ API Health Check</h2>{f.read()}</div>"
                 
         if run_security and os.path.exists("security_audit_report.html"):
+            nav_links_html += "<a href='#nav-security'>🔒 Security Headers</a>"
             with open("security_audit_report.html", "r", encoding="utf-8") as f:
-                master_html += f"<div class='module-card'><h2 class='module-title'>🔒 Security Header Audit</h2>{f.read()}</div>"
+                report_content_html += f"<div id='nav-security' class='module-card'><h2 class='module-title'>🔒 Security Header Audit</h2>{f.read()}</div>"
                 
         if run_load and os.path.exists("load_audit_report.html"):
+            nav_links_html += "<a href='#nav-load'>⏱️ Load Testing</a>"
             with open("load_audit_report.html", "r", encoding="utf-8") as f:
-                master_html += f"<div class='module-card'><h2 class='module-title'>⏱️ Load Testing</h2>{f.read()}</div>"
+                report_content_html += f"<div id='nav-load' class='module-card'><h2 class='module-title'>⏱️ Load Testing</h2>{f.read()}</div>"
 
-        master_html += """
+        nav_links_html += "</div>"
+
+        # Combine everything together
+        master_html += nav_links_html + report_content_html + """
                 <div style="text-align: center; color: #6c757d; margin-top: 50px; font-size: 12px;">
                     Report generated by QA Web Verifier Suite | Version 1.0
                 </div>
@@ -360,22 +378,12 @@ if st.session_state.reports_ready:
         # ==========================================
         # THE FIX: Python Raw HTML String Scrubbing
         # ==========================================
-        # Physically overwrite any harsh primary colors generated by the sub-modules
         color_targets = {
-            # Greens to Muted Sage
-            "green": "#5B8A72",
-            "#28a745": "#5B8A72",
-            "#28A745": "#5B8A72",
-            # Reds to Dusty Brick
-            "red": "#C65D57",
-            "#dc3545": "#C65D57",
-            "#DC3545": "#C65D57",
-            "#FF4B4B": "#C65D57"
+            "green": "#5B8A72", "#28a745": "#5B8A72", "#28A745": "#5B8A72",
+            "red": "#C65D57", "#dc3545": "#C65D57", "#DC3545": "#C65D57", "#FF4B4B": "#C65D57"
         }
         
-        # Scrub inline styles and attributes explicitly to avoid changing body text
         for old_color, new_color in color_targets.items():
-            # Target standard CSS formatting
             master_html = master_html.replace(f"color: {old_color}", f"color: {new_color}")
             master_html = master_html.replace(f"color:{old_color}", f"color: {new_color}")
             master_html = master_html.replace(f"background-color: {old_color}", f"background-color: {new_color}")
@@ -384,7 +392,6 @@ if st.session_state.reports_ready:
             master_html = master_html.replace(f"background:{old_color}", f"background: {new_color}")
             master_html = master_html.replace(f"border-color: {old_color}", f"border-color: {new_color}")
             master_html = master_html.replace(f"border-color:{old_color}", f"border-color: {new_color}")
-            # Target older HTML tag formatting
             master_html = master_html.replace(f'color="{old_color}"', f'color="{new_color}"')
             master_html = master_html.replace(f"color='{old_color}'", f"color='{new_color}'")
             master_html = master_html.replace(f'bgcolor="{old_color}"', f'bgcolor="{new_color}"')
@@ -402,16 +409,13 @@ if st.session_state.reports_ready:
         st.info("💡 **Click the button below to instantly open your full Master Report in a new, full-screen browser tab.**")
         
         import base64
-        # Encode the HTML to safely pass it to JavaScript
         b64_html = base64.b64encode(master_html.encode('utf-8')).decode('utf-8')
         
-        # We MUST use components.html here so the browser actually runs the JavaScript
         open_tab_js = f"""
         <div id="btn-container" style="display: flex; justify-content: center; margin-top: 20px;">
             </div>
         <script>
             try {{
-                // Safely decode Base64 into a UTF-8 string
                 const b64Data = "{b64_html}";
                 const binaryStr = window.atob(b64Data);
                 const bytes = new Uint8Array(binaryStr.length);
@@ -420,11 +424,9 @@ if st.session_state.reports_ready:
                 }}
                 const decodedHtml = new TextDecoder('utf-8').decode(bytes);
 
-                // Create a file-like Blob in the browser's memory
                 const blob = new Blob([decodedHtml], {{ type: 'text/html' }});
                 const url = URL.createObjectURL(blob);
                 
-                // Inject the button with the true Blob URL attached BEFORE the user clicks. Included font update to match.
                 const container = document.getElementById('btn-container');
                 container.innerHTML = `
                     <a id="open-report-btn" href="${{url}}" target="_blank" style="background-color: #546E7A; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-family: 'Goudy Old Style', Garamond, 'Times New Roman', serif; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer; transition: background-color 0.3s; display: inline-block;">
@@ -432,16 +434,12 @@ if st.session_state.reports_ready:
                     </a>
                 `;
                 
-                // Add a subtle hover effect (darkens to Slate)
                 const btn = document.getElementById('open-report-btn');
                 btn.addEventListener('mouseover', function() {{ this.style.backgroundColor = '#37474F'; }});
                 btn.addEventListener('mouseout', function() {{ this.style.backgroundColor = '#546E7A'; }});
             }} catch (e) {{
-                // Fallback in case of error
                 console.error(e);
             }}
         </script>
         """
-        
-        # Render the custom button securely using components.html!
         components.html(open_tab_js, height=100)
