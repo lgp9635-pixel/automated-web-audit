@@ -309,8 +309,8 @@ if st.session_state.reports_ready:
         with open(master_filename, "w", encoding="utf-8") as f:
             f.write(master_html)
 
-        # ==========================================
-        # THE NEW TAB FIX: JavaScript Blob rendering
+       # ==========================================
+        # THE NEW TAB FIX: JavaScript Blob rendering (V2)
         # ==========================================
         st.markdown("---")
         st.subheader("📄 Master Report Ready")
@@ -320,24 +320,39 @@ if st.session_state.reports_ready:
         # Encode the HTML to safely pass it to JavaScript
         b64_html = base64.b64encode(master_html.encode('utf-8')).decode('utf-8')
         
-        # Create a custom HTML button that uses JavaScript to open a new tab
+        # Create a custom HTML button with bulletproof decoding and popup detection
         open_tab_js = f"""
         <div style="display: flex; justify-content: center; margin-top: 20px;">
-            <a id="open-report-btn" href="#" style="background-color: #FF4B4B; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.3s;">
+            <button id="open-report-btn" style="background-color: #FF4B4B; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer; transition: 0.3s;">
                 🚀 Open Master Report in New Tab
-            </a>
+            </button>
         </div>
         <script>
             document.getElementById('open-report-btn').addEventListener('click', function(e) {{
                 e.preventDefault();
-                // Decode the Base64 HTML back into raw text
-                const decodedHtml = decodeURIComponent(escape(window.atob("{b64_html}")));
-                // Create a file-like Blob in the browser's memory
-                const blob = new Blob([decodedHtml], {{ type: 'text/html' }});
-                // Generate a temporary URL for that Blob
-                const url = URL.createObjectURL(blob);
-                // Open it in a new tab!
-                window.open(url, '_blank');
+                try {{
+                    // 1. Safely decode Base64 into a UTF-8 string (handles emojis perfectly!)
+                    const b64Data = "{b64_html}";
+                    const binaryStr = window.atob(b64Data);
+                    const bytes = new Uint8Array(binaryStr.length);
+                    for (let i = 0; i < binaryStr.length; i++) {{
+                        bytes[i] = binaryStr.charCodeAt(i);
+                    }}
+                    const decodedHtml = new TextDecoder('utf-8').decode(bytes);
+
+                    // 2. Try to open the new tab
+                    const newWindow = window.open("", "_blank");
+                    
+                    // 3. If successful, write the HTML. If blocked, alert the user!
+                    if (newWindow) {{
+                        newWindow.document.write(decodedHtml);
+                        newWindow.document.close();
+                    }} else {{
+                        alert("⚠️ Your browser's Popup Blocker stopped the tab from opening!\\n\\nPlease look at the right side of your URL/Address bar at the top of your screen, click the small 'Popup Blocked' icon, select 'Always allow', and try clicking the button again.");
+                    }}
+                }} catch (err) {{
+                    alert("Error opening report: " + err.message);
+                }}
             }});
         </script>
         """
