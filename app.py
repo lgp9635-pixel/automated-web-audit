@@ -25,22 +25,22 @@ st.set_page_config(
 # Force install Playwright browsers on the cloud
 os.system(f"{sys.executable} -m playwright install chromium")
 
-# Hide Streamlit Branding & Fix Button Colors
+# Hide Streamlit Branding & Fix Button Colors (Updated to elegant Blue-Gray)
 hide_streamlit_style = """
             <style>
             #MainMenu {visibility: hidden;}
             footer {visibility: hidden;}
             header {visibility: hidden;}
             
-            /* Override Streamlit's default red "Primary" button to a professional Blue */
+            /* Override Streamlit's default red "Primary" button to a professional Blue-Gray */
             button[kind="primary"] {
-                background-color: #0068c9 !important;
-                border-color: #0068c9 !important;
+                background-color: #546E7A !important;
+                border-color: #546E7A !important;
                 color: white !important;
             }
             button[kind="primary"]:hover {
-                background-color: #0052a3 !important;
-                border-color: #0052a3 !important;
+                background-color: #37474F !important;
+                border-color: #37474F !important;
             }
             </style>
             """
@@ -324,7 +324,7 @@ if st.session_state.reports_ready:
             f.write(master_html)
 
         # ==========================================
-        # THE NEW TAB FIX: Secure Blob URL + Blue Button
+        # THE NEW TAB FIX: Secure Blob URL + Blue-Gray Button
         # ==========================================
         st.markdown("---")
         st.subheader("📄 Master Report Ready")
@@ -334,10 +334,10 @@ if st.session_state.reports_ready:
         # Encode the HTML to safely pass it to JavaScript
         b64_html = base64.b64encode(master_html.encode('utf-8')).decode('utf-8')
         
-        # We now use a true <a> anchor tag connected to a Blob URL, styling it to a professional Blue.
+        # We now use a true <a> anchor tag connected to a Blob URL, styling it to a professional Blue-Gray.
         open_tab_js = f"""
         <div style="display: flex; justify-content: center; margin-top: 20px;">
-            <a id="open-report-btn" href="#" target="_blank" style="background-color: #0068c9; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer; transition: background-color 0.3s;">
+            <a id="open-report-btn" href="#" target="_blank" style="background-color: #546E7A; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer; transition: background-color 0.3s;">
                 📘 Open Master Report in New Tab
             </a>
         </div>
@@ -360,9 +360,9 @@ if st.session_state.reports_ready:
             const btn = document.getElementById('open-report-btn');
             btn.href = url;
             
-            // Add a subtle hover effect
-            btn.addEventListener('mouseover', function() {{ this.style.backgroundColor = '#0052a3'; }});
-            btn.addEventListener('mouseout', function() {{ this.style.backgroundColor = '#0068c9'; }});
+            // Add a subtle hover effect (darkens to Slate)
+            btn.addEventListener('mouseover', function() {{ this.style.backgroundColor = '#37474F'; }});
+            btn.addEventListener('mouseout', function() {{ this.style.backgroundColor = '#546E7A'; }});
         </script>
         """
         
