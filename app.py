@@ -5,7 +5,8 @@ import urllib.parse
 import sys
 import glob
 import webbrowser  
-import datetime    
+import datetime  
+import streamlit.components.v1 as components  
 from load_tester import run_native_load_test
 from utils import write_load_test_report
 
@@ -265,6 +266,7 @@ if st.session_state.reports_ready:
         with open(master_filename, "w", encoding="utf-8") as f:
             f.write(master_html)
 
+        # Display the primary download button
         st.download_button(
             label="💾 Download Unified Master Report (HTML)", 
             data=master_html, 
@@ -274,9 +276,7 @@ if st.session_state.reports_ready:
             type="primary"
         )
         
-        try:
-            file_path = f"file://{os.path.realpath(master_filename)}"
-            webbrowser.open(file_path)
-            st.info("🌐 Master report automatically opened in a new browser tab!")
-        except Exception as e:
-            st.caption("Could not auto-open browser tab. Please click the download button above.")
+        # Render the HTML report directly inside the Streamlit dashboard
+        st.markdown("---")
+        st.subheader("📄 Master Report Preview")
+        components.html(master_html, height=800, scrolling=True)
