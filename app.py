@@ -177,20 +177,21 @@ with st.sidebar:
     # ==========================================
     # MISSING TARGET URL UI LOGIC
     # ==========================================
-    # If any module is selected BUT the Target URL box is empty, paint the outline red.
+    # If any module is selected BUT the Target URL box is empty, alert the user!
     if not target_url and any([run_crawler, run_grammar, run_api, run_security, run_load]):
+        
+        # 1. Native Streamlit Alert in the sidebar
+        st.error("🚨 Please enter a Target URL at the top to proceed.")
+        
+        # 2. Brute-force CSS to make the input box glow red
         st.markdown(
             """
             <style>
-            /* Target the specific input wrapper by its aria-label using modern :has() selector */
-            div[data-baseweb="input"]:has(input[aria-label="Target URL (e.g., https://example.com)"]) {
-                border-color: #FF4B4B !important;
-                box-shadow: 0 0 0 1px #FF4B4B !important;
-            }
-            /* Fallback for older browsers (targets the first text input in the sidebar) */
-            section[data-testid="stSidebar"] div[data-testid="stTextInput"]:first-of-type div[data-baseweb="input"] {
-                border-color: #FF4B4B !important;
-                box-shadow: 0 0 0 1px #FF4B4B !important;
+            /* Target the sidebar text input directly, bypassing modern selectors */
+            [data-testid="stSidebar"] [data-testid="stTextInput"] div[data-baseweb="input"] {
+                border: 2px solid #FF4B4B !important;
+                box-shadow: 0 0 8px rgba(255, 75, 75, 0.6) !important;
+                background-color: rgba(255, 75, 75, 0.1) !important;
             }
             </style>
             """,
