@@ -21,8 +21,8 @@ def generate_html_report(domain, total, broken, passed, broken_links):
     </style></head><body>
         <h1>Audit Report: {{ domain }}</h1>
         <div class="summary">
-            <p>Total URLs Scanned: <strong>{{ total }}</strong></p>
-            <p style="color: green;">URLs Passed: <strong>{{ passed }}</strong></p>
+            <p>Total Links Validated: <strong>{{ total }}</strong></p>
+            <p style="color: green;">Links Passed: <strong>{{ passed }}</strong></p>
             <p style="color: red;">Broken Links Found: <strong>{{ broken }}</strong></p>
         </div>
         <h2>Broken Links</h2>
@@ -230,14 +230,4 @@ def write_load_test_report(metrics, output_filename="load_audit_report.html"):
         
         with open(output_filename, "w", encoding="utf-8") as f:
             f.write(template.render(
-                metrics=metrics,
-                success_color=success_color
-            ))
-            
-        print(f"⏱️ Load test HTML report successfully generated: {output_filename}")
-        
-        # Automatically pop it open in the browser
-        webbrowser.open(f"file://{os.path.abspath(output_filename)}")
-        
-    except Exception as e:
-        print(f"⚠️ An error occurred while writing the load test report: {e}")
+                metrics
