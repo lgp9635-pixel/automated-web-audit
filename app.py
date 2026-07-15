@@ -25,12 +25,23 @@ st.set_page_config(
 # Force install Playwright browsers on the cloud
 os.system(f"{sys.executable} -m playwright install chromium")
 
-# Hide Streamlit Branding
+# Hide Streamlit Branding & Fix Button Colors
 hide_streamlit_style = """
             <style>
             #MainMenu {visibility: hidden;}
             footer {visibility: hidden;}
             header {visibility: hidden;}
+            
+            /* Override Streamlit's default red "Primary" button to a professional Blue */
+            button[kind="primary"] {
+                background-color: #0068c9 !important;
+                border-color: #0068c9 !important;
+                color: white !important;
+            }
+            button[kind="primary"]:hover {
+                background-color: #0052a3 !important;
+                border-color: #0052a3 !important;
+            }
             </style>
             """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
@@ -115,7 +126,7 @@ with st.sidebar:
             
             st.success(f"✅ Initial scan found **{url_count}** discoverable links on the homepage.")
             
-            # THE FIX: Updated the "help" tooltip to include the Production Warning
+            # The Exhaustive Crawl Override
             exhaustive_crawl = st.checkbox(
                 "🔥 Run Exhaustive Full-Site Crawl", 
                 help="Ignores all limits and crawls every internal page. 🛑 BEST PRACTICE: Only run this against a Development/Integration environment to avoid straining Production servers."
@@ -313,7 +324,7 @@ if st.session_state.reports_ready:
             f.write(master_html)
 
         # ==========================================
-        # THE NEW TAB FIX: JavaScript Blob rendering (V2)
+        # THE NEW TAB FIX: Secure Blob URL + Blue Button
         # ==========================================
         st.markdown("---")
         st.subheader("📄 Master Report Ready")
@@ -323,42 +334,36 @@ if st.session_state.reports_ready:
         # Encode the HTML to safely pass it to JavaScript
         b64_html = base64.b64encode(master_html.encode('utf-8')).decode('utf-8')
         
-        # Create a custom HTML button with bulletproof decoding and popup detection
+        # We now use a true <a> anchor tag connected to a Blob URL, styling it to a professional Blue.
         open_tab_js = f"""
         <div style="display: flex; justify-content: center; margin-top: 20px;">
-            <button id="open-report-btn" style="background-color: #FF4B4B; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer; transition: 0.3s;">
-                🚀 Open Master Report in New Tab
-            </button>
+            <a id="open-report-btn" href="#" target="_blank" style="background-color: #0068c9; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer; transition: background-color 0.3s;">
+                📘 Open Master Report in New Tab
+            </a>
         </div>
         <script>
-            document.getElementById('open-report-btn').addEventListener('click', function(e) {{
-                e.preventDefault();
-                try {{
-                    // 1. Safely decode Base64 into a UTF-8 string (handles emojis perfectly!)
-                    const b64Data = "{b64_html}";
-                    const binaryStr = window.atob(b64Data);
-                    const bytes = new Uint8Array(binaryStr.length);
-                    for (let i = 0; i < binaryStr.length; i++) {{
-                        bytes[i] = binaryStr.charCodeAt(i);
-                    }}
-                    const decodedHtml = new TextDecoder('utf-8').decode(bytes);
+            // Safely decode Base64 into a UTF-8 string
+            const b64Data = "{b64_html}";
+            const binaryStr = window.atob(b64Data);
+            const bytes = new Uint8Array(binaryStr.length);
+            for (let i = 0; i < binaryStr.length; i++) {{
+                bytes[i] = binaryStr.charCodeAt(i);
+            }}
+            const decodedHtml = new TextDecoder('utf-8').decode(bytes);
 
-                    // 2. Try to open the new tab
-                    const newWindow = window.open("", "_blank");
-                    
-                    // 3. If successful, write the HTML. If blocked, alert the user!
-                    if (newWindow) {{
-                        newWindow.document.write(decodedHtml);
-                        newWindow.document.close();
-                    }} else {{
-                        alert("⚠️ Your browser's Popup Blocker stopped the tab from opening!\\n\\nPlease look at the right side of your URL/Address bar at the top of your screen, click the small 'Popup Blocked' icon, select 'Always allow', and try clicking the button again.");
-                    }}
-                }} catch (err) {{
-                    alert("Error opening report: " + err.message);
-                }}
-            }});
+            // Create a file-like Blob in the browser's memory
+            const blob = new Blob([decodedHtml], {{ type: 'text/html' }});
+            
+            // Attach the Blob directly to the link's URL BEFORE the user clicks it.
+            // This guarantees the browser treats it as a 100% safe, user-initiated click.
+            const url = URL.createObjectURL(blob);
+            const btn = document.getElementById('open-report-btn');
+            btn.href = url;
+            
+            // Add a subtle hover effect
+            btn.addEventListener('mouseover', function() {{ this.style.backgroundColor = '#0052a3'; }});
+            btn.addEventListener('mouseout', function() {{ this.style.backgroundColor = '#0068c9'; }});
         </script>
         """
         
-        # Render the custom button safely using st.html() to clear the deprecation warning
         st.html(open_tab_js)
